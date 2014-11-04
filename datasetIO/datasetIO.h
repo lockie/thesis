@@ -6,6 +6,9 @@
 extern "C" {
 #endif  /* __cplusplus */
 
+#include <cv.h>
+
+
 int dataset_create(void** dataset, const char* path,
 	const char* title, char** errorMessage);
 void dataset_close(void** dataset);
