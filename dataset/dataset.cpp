@@ -5,20 +5,31 @@
 
 #include <boost/program_options.hpp>
 
+#include <opencv2/core/core.hpp>
+
+#include "datasetIO.h"
+
 namespace po = boost::program_options;
 
 
-int static dataset_show  (const char* dataset, const char* predicate)
+int static show(const char* path, const char* predicate)
+{
+	void* dataset;
+	char* errMsg;
+	int r;
+	if((r = dataset_open(&dataset, path, &errMsg)) != 0)
+	{
+		std::cout << "Error: " << errMsg << std::endl;
+		return r;
+	}
+}
+
+int static remove(const char* dataset, const char* predicate)
 {
 
 }
 
-int static dataset_remove(const char* dataset, const char* predicate)
-{
-
-}
-
-int static dataset_calcDescriptors(const char* dataset, int algorithm) // ?
+int static calcDescriptors(const char* dataset, int algorithm) // ?
 {
 
 }
@@ -98,11 +109,11 @@ int main(int argc, char** argv)
 	const char* pred = predicate.empty() ? NULL : predicate.c_str();
 
 	if(vm.count("show"))
-		return dataset_show(datasetPath.c_str(), pred);
+		return show(datasetPath.c_str(), pred);
 	else if(vm.count("remove"))
-		return dataset_remove(datasetPath.c_str(), pred);
+		return remove(datasetPath.c_str(), pred);
 	else if(vm.count("calc-descriptors"))
-		return dataset_calcDescriptors(datasetPath.c_str(), 0);
+		return calcDescriptors(datasetPath.c_str(), 0);
 	else
 	{
 		std::cout << "Command-line error: no action specified" << std::endl;

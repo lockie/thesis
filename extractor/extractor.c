@@ -14,7 +14,7 @@ int main(int argc, char** argv)
 {
 	const char* fileName = argc == 2 ? argv[1] : "video";
 	char* fn = strdup(fileName);
-	const char* baseName = basename(fn);
+	/*const char* baseName = basename(fn);*/
 
 	// TODO : image ROI parameter for that Kristiinankaupunki video!
 
@@ -33,7 +33,7 @@ int main(int argc, char** argv)
 	}
 
 	/* TODO: command-line parameter for output dir  */
-	if(dataset_create(&dataset, "", baseName, &errMsg) != 0)
+	if(dataset_create(&dataset, "", &errMsg) != 0)
 	{
 		fprintf(stderr, "ERROR: %s\n", errMsg);
 		cvReleaseCapture(&capture);

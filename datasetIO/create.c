@@ -4,19 +4,19 @@
 #include <limits.h>
 #include <string.h>
 
-#include "datasetIO.h"
 #include "internal.h"
+#include "datasetIO.h"
 
 
 static char filename[PATH_MAX];
 
-int dataset_create(void** _dataset, const char* path,
-		const char* title, char** errorMessage)
+int dataset_create(void** _dataset, const char* path, char** errorMessage)
 {
 	int r;
 	dataset_t* dataset = malloc(sizeof(dataset_t));
 	strncpy(filename, path, sizeof(filename));
-	strncat(filename, "index.sqlite3", sizeof(filename) - strlen(path));
+	strncat(filename, "/", sizeof(filename) - strlen(path));
+	strncat(filename, "index.sqlite3", sizeof(filename) - strlen(path) - 1);
 	memset(dataset, 0, sizeof(dataset_t));
 
 	if((r = sqlite3_open(filename, &dataset->db)) != SQLITE_OK)
@@ -36,34 +36,75 @@ int dataset_create(void** _dataset, const char* path,
 		return r;
 
 	strncpy(filename, path, sizeof(filename));
-	strncat(filename, "samples.tar", sizeof(filename) - strlen(path));
+	strncat(filename, "/", sizeof(filename) - strlen(path));
+	strncat(filename, "samples.tar", sizeof(filename) - strlen(path) - 1);
 
-	dataset->ar = archive_write_new();
-	archive_write_set_format_pax_restricted(dataset->ar);
-	if((r = archive_write_open_filename(dataset->ar, filename)) != ARCHIVE_OK)
+	dataset->ar_write = archive_write_new();
+	archive_write_set_format_pax_restricted(dataset->ar_write);
+	if((r = archive_write_open_filename(dataset->ar_write,
+			filename)) != ARCHIVE_OK)
 	{
-		*errorMessage = strdup(archive_error_string(dataset->ar)); /*TODO:leak*/
+		*errorMessage = strdup(archive_error_string(dataset->ar_write)); /*TODO:leak*/
 		dataset_close((void**)&dataset);
 		return r;
 	}
 	dataset->ent = archive_entry_new();
 
-	dataset->title = title;
 	dataset->path  = path;
 
 	*_dataset = dataset;
 	return 0;
 }
 
-// TODO : dataset_open fn?
+int dataset_open(void** _dataset, const char* path, char** errorMessage)
+{
+	int r;
+	dataset_t* dataset = malloc(sizeof(dataset_t));
+	strncpy(filename, path, sizeof(filename));
+	strncat(filename, "/", sizeof(filename) - strlen(path));
+	strncat(filename, "index.sqlite3", sizeof(filename) - strlen(path) - 1);
+	memset(dataset, 0, sizeof(dataset_t));
+
+	if((r = sqlite3_open(filename, &dataset->db)) != SQLITE_OK)
+	{
+		*errorMessage = (char*)sqlite3_errmsg(dataset->db);
+		return r;
+	}
+
+	strncpy(filename, path, sizeof(filename));
+	strncat(filename, "/", sizeof(filename) - strlen(path));
+	strncat(filename, "samples.tar", sizeof(filename) - strlen(path) - 1);
+
+	dataset->ar_read = archive_read_new();
+	archive_read_support_format_tar(dataset->ar_read);
+	if ((r = archive_read_open_filename(dataset->ar_read,
+			filename, 16384)) != ARCHIVE_OK)
+	{
+		*errorMessage = strdup(archive_error_string(dataset->ar_read)); /*TODO:leak*/
+		dataset_close((void**)&dataset);
+		return r;
+	}
+
+	dataset->path  = path;
+
+	*_dataset = dataset;
+	return 0;
+}
 
 void dataset_close(void** _dataset)
 {
 	dataset_t* dataset = *_dataset;
 	*_dataset = NULL;
 
-	archive_write_close(dataset->ar);
-	archive_write_free(dataset->ar);
+	if(dataset->ar_write)
+	{
+		archive_write_close(dataset->ar_write);
+		archive_write_free(dataset->ar_write);
+	}
+	if(dataset->ar_read)
+	{
+		archive_read_free(dataset->ar_read);
+	}
 
 	sqlite3_close(dataset->db);
 
@@ -81,6 +122,11 @@ int dataset_create_sample(void** _dataset, int frame, IplImage* image,
 	int r;
 	CvMat* mat;
 	dataset_t* dataset = *_dataset;
+	if(!dataset->ar_write)
+	{
+		*errMsg = "Dataset is not open for writing";
+		return -1;
+	}
 	if(dataset->lastFrame != frame)
 	{
 		dataset->lastFrame = frame;
@@ -96,20 +142,20 @@ int dataset_create_sample(void** _dataset, int frame, IplImage* image,
 
 	mat = cvEncodeImage(".png", tmp, &compression[0]);
 	archive_entry_clear(dataset->ent);
-	snprintf(outFileName, sizeof(outFileName), "%s_%d_%d.png",
-		dataset->title, frame, ++dataset->frameObjectCounter);
+	snprintf(outFileName, sizeof(outFileName), "sample_%d_%d.png",
+		frame, ++dataset->frameObjectCounter);
 	archive_entry_set_pathname(dataset->ent, outFileName);
 	archive_entry_set_size(dataset->ent, mat->step);
 	archive_entry_set_filetype(dataset->ent, AE_IFREG);
 	archive_entry_set_perm(dataset->ent, 0644);
-	if((r = archive_write_header(dataset->ar, dataset->ent)) != ARCHIVE_OK)
+	if((r = archive_write_header(dataset->ar_write, dataset->ent)) != ARCHIVE_OK)
 	{
-		*errMsg = strdup(archive_error_string(dataset->ar)); /*TODO:leak*/
+		*errMsg = strdup(archive_error_string(dataset->ar_write)); /*TODO:leak*/
 		return r;
 	}
-	if(archive_write_data(dataset->ar, mat->data.ptr, mat->step) < 0)
+	if(archive_write_data(dataset->ar_write, mat->data.ptr, mat->step) < 0)
 	{
-		*errMsg = strdup(archive_error_string(dataset->ar)); /*TODO:leak*/
+		*errMsg = strdup(archive_error_string(dataset->ar_write)); /*TODO:leak*/
 		return r;
 	}
 

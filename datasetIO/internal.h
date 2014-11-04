@@ -14,9 +14,9 @@
 typedef struct dataset_t
 {
 	sqlite3* db;
-	struct archive* ar;
+	struct archive* ar_write;
+	struct archive* ar_read;
 	struct archive_entry* ent;
-	const char* title;
 	const char* path;
 	int lastFrame;
 	int frameObjectCounter;

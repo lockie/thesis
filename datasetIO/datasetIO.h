@@ -6,11 +6,8 @@
 extern "C" {
 #endif  /* __cplusplus */
 
-#include <cv.h>
-
-
-int dataset_create(void** dataset, const char* path,
-	const char* title, char** errorMessage);
+int dataset_create(void** dataset, const char* path, char** errorMessage);
+int dataset_open(void** dataset, const char* path, char** errorMessage);
 void dataset_close(void** dataset);
 int dataset_create_sample(void** dataset, int frame, IplImage* image,
 		const CvRect* bounds, char** errMsg);
