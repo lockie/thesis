@@ -33,9 +33,10 @@ int main(int argc, char** argv)
 	}
 
 	/* TODO: command-line parameter for output dir  */
-	if(dataset_create(&dataset, "", &errMsg) != 0)
+	if(dataset_create(&dataset, ".", &errMsg) != 0)
 	{
 		fprintf(stderr, "ERROR: %s\n", errMsg);
+		dataset_close(&dataset);
 		cvReleaseCapture(&capture);
 		return EXIT_FAILURE;
 	}

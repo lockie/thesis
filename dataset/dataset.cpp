@@ -6,11 +6,20 @@
 #include <boost/program_options.hpp>
 
 #include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
 
 #include "datasetIO.h"
 
 namespace po = boost::program_options;
 
+
+int show_callback(const IplImage* img, int frame, int x, int y)
+{
+	cvShowImage("sample", img);
+	if((cvWaitKey(0) & 0xff) == 27)
+		return -1;
+	return 0;
+}
 
 int static show(const char* path, const char* predicate)
 {
@@ -20,8 +29,18 @@ int static show(const char* path, const char* predicate)
 	if((r = dataset_open(&dataset, path, &errMsg)) != 0)
 	{
 		std::cout << "Error: " << errMsg << std::endl;
+		dataset_close(&dataset);
 		return r;
 	}
+	if((r = dataset_read_samples(&dataset, predicate,
+			show_callback, &errMsg)) != 0)
+	{
+		std::cout << "Error: " << errMsg << std::endl;
+		dataset_close(&dataset);
+		return r;
+	}
+	dataset_close(&dataset);
+	return 0;
 }
 
 int static remove(const char* dataset, const char* predicate)
@@ -106,7 +125,7 @@ int main(int argc, char** argv)
 		return EXIT_SUCCESS;
 	}
 
-	const char* pred = predicate.empty() ? NULL : predicate.c_str();
+	const char* pred = predicate.empty() ? "1=1" : predicate.c_str();
 
 	if(vm.count("show"))
 		return show(datasetPath.c_str(), pred);

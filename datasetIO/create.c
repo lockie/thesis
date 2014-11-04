@@ -5,7 +5,6 @@
 #include <string.h>
 
 #include "internal.h"
-#include "datasetIO.h"
 
 
 static char filename[PATH_MAX];
@@ -18,6 +17,7 @@ int dataset_create(void** _dataset, const char* path, char** errorMessage)
 	strncat(filename, "/", sizeof(filename) - strlen(path));
 	strncat(filename, "index.sqlite3", sizeof(filename) - strlen(path) - 1);
 	memset(dataset, 0, sizeof(dataset_t));
+	*_dataset = dataset;
 
 	if((r = sqlite3_open(filename, &dataset->db)) != SQLITE_OK)
 	{
@@ -45,14 +45,29 @@ int dataset_create(void** _dataset, const char* path, char** errorMessage)
 			filename)) != ARCHIVE_OK)
 	{
 		*errorMessage = strdup(archive_error_string(dataset->ar_write)); /*TODO:leak*/
-		dataset_close((void**)&dataset);
 		return r;
 	}
 	dataset->ent = archive_entry_new();
 
 	dataset->path  = path;
 
-	*_dataset = dataset;
+	return 0;
+}
+
+/* internal use only */
+int _dataset_reopen_archive(dataset_t* dataset, char** errMsg)
+{
+	int r;
+	if(dataset->ar_read)
+		archive_read_free(dataset->ar_read);
+	dataset->ar_read = archive_read_new();
+	archive_read_support_format_tar(dataset->ar_read);
+	if ((r = archive_read_open_filename(dataset->ar_read,
+			filename, 16384)) != ARCHIVE_OK)
+	{
+		*errMsg = strdup(archive_error_string(dataset->ar_read)); /*TODO:leak*/
+		return r;
+	}
 	return 0;
 }
 
@@ -64,6 +79,7 @@ int dataset_open(void** _dataset, const char* path, char** errorMessage)
 	strncat(filename, "/", sizeof(filename) - strlen(path));
 	strncat(filename, "index.sqlite3", sizeof(filename) - strlen(path) - 1);
 	memset(dataset, 0, sizeof(dataset_t));
+	*_dataset = dataset;
 
 	if((r = sqlite3_open(filename, &dataset->db)) != SQLITE_OK)
 	{
@@ -74,20 +90,13 @@ int dataset_open(void** _dataset, const char* path, char** errorMessage)
 	strncpy(filename, path, sizeof(filename));
 	strncat(filename, "/", sizeof(filename) - strlen(path));
 	strncat(filename, "samples.tar", sizeof(filename) - strlen(path) - 1);
+	dataset->archive_path = strdup(filename);
 
-	dataset->ar_read = archive_read_new();
-	archive_read_support_format_tar(dataset->ar_read);
-	if ((r = archive_read_open_filename(dataset->ar_read,
-			filename, 16384)) != ARCHIVE_OK)
-	{
-		*errorMessage = strdup(archive_error_string(dataset->ar_read)); /*TODO:leak*/
-		dataset_close((void**)&dataset);
+	if((r = _dataset_reopen_archive(dataset, errorMessage)) != 0)
 		return r;
-	}
 
 	dataset->path  = path;
 
-	*_dataset = dataset;
 	return 0;
 }
 
@@ -105,6 +114,7 @@ void dataset_close(void** _dataset)
 	{
 		archive_read_free(dataset->ar_read);
 	}
+	free(dataset->archive_path);
 
 	sqlite3_close(dataset->db);
 
