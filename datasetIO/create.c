@@ -1,13 +1,14 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <limits.h>
 #include <string.h>
 
 #include "internal.h"
 
 
-static char filename[PATH_MAX];
+const char* tempFileName = "/tmp/dataset.tar";
+
+char filename[PATH_MAX];
 
 int dataset_create(void** _dataset, const char* path, char** errorMessage)
 {
@@ -55,15 +56,33 @@ int dataset_create(void** _dataset, const char* path, char** errorMessage)
 }
 
 /* internal use only */
-int _dataset_reopen_archive(dataset_t* dataset, char** errMsg)
+int _dataset_reopen_archive(dataset_t* dataset, int write, char** errMsg)
 {
 	int r;
+
+	if(write)
+	{
+		/* in this case file opened R/W, so open empty tar file for writing
+		 *  for further copying it back */
+		if(dataset->ar_write)
+			archive_write_free(dataset->ar_write);
+		dataset->ar_write = archive_write_new();
+		archive_write_set_format_pax_restricted(dataset->ar_write);
+		if((r = archive_write_open_filename(dataset->ar_write,
+			tempFileName)) != ARCHIVE_OK)
+		{
+			*errMsg = strdup(archive_error_string(dataset->ar_write));
+			/*TODO:leak*/
+			return r;
+		}
+	}
+
 	if(dataset->ar_read)
 		archive_read_free(dataset->ar_read);
 	dataset->ar_read = archive_read_new();
 	archive_read_support_format_tar(dataset->ar_read);
 	if ((r = archive_read_open_filename(dataset->ar_read,
-			filename, 16384)) != ARCHIVE_OK)
+			dataset->archive_path, 16384)) != ARCHIVE_OK)
 	{
 		*errMsg = strdup(archive_error_string(dataset->ar_read)); /*TODO:leak*/
 		return r;
@@ -71,7 +90,7 @@ int _dataset_reopen_archive(dataset_t* dataset, char** errMsg)
 	return 0;
 }
 
-int dataset_open(void** _dataset, const char* path, char** errorMessage)
+int dataset_open(void** _dataset, const char* path, int write, char** errMsg)
 {
 	int r;
 	dataset_t* dataset = malloc(sizeof(dataset_t));
@@ -83,7 +102,7 @@ int dataset_open(void** _dataset, const char* path, char** errorMessage)
 
 	if((r = sqlite3_open(filename, &dataset->db)) != SQLITE_OK)
 	{
-		*errorMessage = (char*)sqlite3_errmsg(dataset->db);
+		*errMsg = (char*)sqlite3_errmsg(dataset->db);
 		return r;
 	}
 
@@ -92,7 +111,7 @@ int dataset_open(void** _dataset, const char* path, char** errorMessage)
 	strncat(filename, "samples.tar", sizeof(filename) - strlen(path) - 1);
 	dataset->archive_path = strdup(filename);
 
-	if((r = _dataset_reopen_archive(dataset, errorMessage)) != 0)
+	if((r = _dataset_reopen_archive(dataset, write, errMsg)) != 0)
 		return r;
 
 	dataset->path  = path;
@@ -122,7 +141,7 @@ void dataset_close(void** _dataset)
 }
 
 static char outFileName[PATH_MAX];
-static char query[8192];  /* 640k should be enough for everyone */
+char query[8192];  /* 640k should be enough for everyone */
 static IplImage* tmp = NULL;
 static int compression[2] = {CV_IMWRITE_PNG_COMPRESSION, 9};
 

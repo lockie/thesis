@@ -26,14 +26,14 @@ int static show(const char* path, const char* predicate)
 	void* dataset;
 	char* errMsg;
 	int r;
-	if((r = dataset_open(&dataset, path, &errMsg)) != 0)
+	if((r = dataset_open(&dataset, path, 0, &errMsg)) != 0)
 	{
 		std::cout << "Error: " << errMsg << std::endl;
 		dataset_close(&dataset);
 		return r;
 	}
 	if((r = dataset_read_samples(&dataset, predicate,
-			show_callback, &errMsg)) != 0)
+			show_callback, &errMsg)) != 0 && r != QUERY_ABORT)
 	{
 		std::cout << "Error: " << errMsg << std::endl;
 		dataset_close(&dataset);
@@ -43,9 +43,25 @@ int static show(const char* path, const char* predicate)
 	return 0;
 }
 
-int static remove(const char* dataset, const char* predicate)
+int static remove(const char* path, const char* predicate)
 {
-
+	void* dataset;
+	char* errMsg;
+	int r;
+	if((r = dataset_open(&dataset, path, 1, &errMsg)) != 0)
+	{
+		std::cout << "Error: " << errMsg << std::endl;
+		dataset_close(&dataset);
+		return r;
+	}
+	if((r = dataset_delete_samples(&dataset, predicate, &errMsg)) != 0)
+	{
+		std::cout << "Error: " << errMsg << std::endl;
+		dataset_close(&dataset);
+		return r;
+	}
+	dataset_close(&dataset);
+	return 0;
 }
 
 int static calcDescriptors(const char* dataset, int algorithm) // ?

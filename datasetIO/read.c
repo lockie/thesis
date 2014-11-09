@@ -3,8 +3,6 @@
 #include "datasetIO.h"
 
 
-static char query[8192];  /* 640k should be enough for everyone */
-
 static int read_callback(void* data, int argc, char** argv, char** colNames)
 {
 	int r;
@@ -18,7 +16,7 @@ static int read_callback(void* data, int argc, char** argv, char** colNames)
 	const char* y        = argv[3];
 	assert(argc == 4);
 
-	if((r = _dataset_reopen_archive(dataset, &errMsg)) != 0)
+	if((r = _dataset_reopen_archive(dataset, 0, &errMsg)) != 0)
 	{
 		fprintf(stderr, "READ ERROR: %s\n", errMsg);
 		return r;
@@ -36,6 +34,7 @@ static int read_callback(void* data, int argc, char** argv, char** colNames)
 			{
 				fprintf(stderr, "READ ERROR: %s\n",
 					archive_error_string(dataset->ar_read));
+				free(buffer);
 				return r;
 			}
 			assert(r == size);

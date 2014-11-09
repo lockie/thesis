@@ -2,6 +2,8 @@
 #ifndef _INTERNAL_H_
 #define _INTERNAL_H_
 
+#include <limits.h>
+
 #include <sqlite3.h>
 
 #include <archive.h>
@@ -24,7 +26,12 @@ typedef struct dataset_t
 	int (*read_callback)(const IplImage*, int frame, int x, int y);
 } dataset_t;
 
-extern int _dataset_reopen_archive(dataset_t* dataset, char** errMsg);
+extern int _dataset_reopen_archive(dataset_t* dataset, int w, char** errMsg);
+
+extern const char* tempFileName;
+
+extern char query[8192];
+extern char filename[PATH_MAX];
 
 #endif  /* _INTERNAL_H_ */
 
