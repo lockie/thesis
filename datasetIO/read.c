@@ -11,10 +11,11 @@ static int read_callback(void* data, int argc, char** argv, char** colNames)
 	IplImage* img = NULL;
 
 	const char* filename = argv[0];
-	const char* frame    = argv[1];
-	const char* x        = argv[2];
-	const char* y        = argv[3];
-	assert(argc == 4);
+	const char* id       = argv[1];
+	const char* frame    = argv[2];
+	const char* x        = argv[3];
+	const char* y        = argv[4];
+	assert(argc == 5);
 
 	if((r = _dataset_reopen_archive(dataset, 0, &errMsg)) != 0)
 	{
@@ -54,11 +55,12 @@ static int read_callback(void* data, int argc, char** argv, char** colNames)
 		fprintf(stderr, "READ ERROR: sample file missing\n");
 		return -1;
 	}
-	return dataset->read_callback(img, atoi(frame), atoi(x), atoi(y));
+	return dataset->read_callback(img, atoi(id), atoi(frame), atoi(x), atoi(y),
+		dataset->read_callback_parameter);
 }
 
 int dataset_read_samples(void** _dataset, const char* predicate,
-		read_sample_callback callback, char** errMsg)
+		read_sample_callback callback, void* parameter, char** errMsg)
 {
 	int r;
 	dataset_t* dataset = *_dataset;
@@ -68,17 +70,20 @@ int dataset_read_samples(void** _dataset, const char* predicate,
 		return -1;
 	}
 	dataset->read_callback = callback;
+	dataset->read_callback_parameter = parameter;
 
 	snprintf(query, sizeof(query),
-		"select filename, frame, x, y from objects where %s;", predicate);
+		"select filename, id, frame, x, y from objects where %s;", predicate);
 	if((r = sqlite3_exec(dataset->db, query,
 			read_callback, (void*)dataset, errMsg)) != SQLITE_OK)
 	{
+		*errMsg = (char*)sqlite3_errmsg(dataset->db);
 		dataset->read_callback = NULL;
 		return r;
 	}
 
 	dataset->read_callback = NULL;
+	dataset->read_callback_parameter = NULL;
 	return 0;
 }
 

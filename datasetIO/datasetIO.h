@@ -9,7 +9,7 @@ extern "C" {
 #define QUERY_ABORT 4
 /* SQLITE_ABORT */
 
-typedef int (*read_sample_callback)(const IplImage*, int frame, int x, int y);
+typedef int (*read_sample_callback)(const IplImage*, int id, int frame, int x, int y, void* data);
 
 int dataset_create(void** dataset, const char* path, char** errorMessage);
 int dataset_open(void** dataset, const char* path, int write, char** errorMessage);
@@ -17,9 +17,14 @@ void dataset_close(void** dataset);
 int dataset_create_sample(void** dataset, int frame, IplImage* image,
 		const CvRect* bounds, char** errMsg);
 int dataset_read_samples(void** dataset, const char* predicate,
-		read_sample_callback callback, char** errorMessage);
+		read_sample_callback callback, void* param, char** errorMessage);
+int dataset_update_sample(void** dataset, int id,
+/* we can really update just a descriptor column, all other info is constant */
+/*  size is in elements, not bytes */
+		float* descriptor, size_t size, char** errorMessage);
 int dataset_delete_samples(void** dataset, const char* predicate,
 		char** errorMessage);
+
 
 #ifdef __cplusplus
 }

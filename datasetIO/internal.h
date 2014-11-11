@@ -23,7 +23,8 @@ typedef struct dataset_t
 	const char* path;
 	int lastFrame;
 	int frameObjectCounter;
-	int (*read_callback)(const IplImage*, int frame, int x, int y);
+	int (*read_callback)(const IplImage*, int id, int frame, int x, int y, void*);
+	void* read_callback_parameter;
 } dataset_t;
 
 extern int _dataset_reopen_archive(dataset_t* dataset, int w, char** errMsg);

@@ -141,6 +141,7 @@ void dataset_close(void** _dataset)
 }
 
 static char outFileName[PATH_MAX];
+/* TODO : replace query string with sqlite_exec_printf */
 char query[8192];  /* 640k should be enough for everyone */
 static IplImage* tmp = NULL;
 static int compression[2] = {CV_IMWRITE_PNG_COMPRESSION, 9};

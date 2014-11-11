@@ -13,7 +13,7 @@
 namespace po = boost::program_options;
 
 
-int show_callback(const IplImage* img, int frame, int x, int y)
+int show_callback(const IplImage* img, int id, int frame, int x, int y, void*)
 {
 	cvShowImage("sample", img);
 	if((cvWaitKey(0) & 0xff) == 27)
@@ -28,14 +28,14 @@ int static show(const char* path, const char* predicate)
 	int r;
 	if((r = dataset_open(&dataset, path, 0, &errMsg)) != 0)
 	{
-		std::cout << "Error: " << errMsg << std::endl;
+		std::cerr << "Error: " << errMsg << std::endl;
 		dataset_close(&dataset);
 		return r;
 	}
 	if((r = dataset_read_samples(&dataset, predicate,
-			show_callback, &errMsg)) != 0 && r != QUERY_ABORT)
+			show_callback, NULL, &errMsg)) != 0 && r != QUERY_ABORT)
 	{
-		std::cout << "Error: " << errMsg << std::endl;
+		std::cerr << "Error: " << errMsg << std::endl;
 		dataset_close(&dataset);
 		return r;
 	}
@@ -50,23 +50,18 @@ int static remove(const char* path, const char* predicate)
 	int r;
 	if((r = dataset_open(&dataset, path, 1, &errMsg)) != 0)
 	{
-		std::cout << "Error: " << errMsg << std::endl;
+		std::cerr << "Error: " << errMsg << std::endl;
 		dataset_close(&dataset);
 		return r;
 	}
 	if((r = dataset_delete_samples(&dataset, predicate, &errMsg)) != 0)
 	{
-		std::cout << "Error: " << errMsg << std::endl;
+		std::cerr << "Error: " << errMsg << std::endl;
 		dataset_close(&dataset);
 		return r;
 	}
 	dataset_close(&dataset);
 	return 0;
-}
-
-int static calcDescriptors(const char* dataset, int algorithm) // ?
-{
-
 }
 
 void static conflicting_options(const po::variables_map& vm,
@@ -97,9 +92,7 @@ int main(int argc, char** argv)
 	actions.add_options()
 		("help,h", "Show handy manual you're reading")
 		("show,s", "Show samples in dataset (predicate is optional)")
-		("remove,r", "Remove samples from dataset by (mandatory) predicate ")
-		// TODO : descriptor algo?
-		("calc-descriptors,c", "Calculate descriptors");
+		("remove,r", "Remove samples from dataset by (mandatory) predicate ");
 	po::options_description parameters("Parameters");
 	parameters.add_options()
 		("dataset-path,d", po::value<std::string>(&datasetPath)->default_value("."),
@@ -122,16 +115,13 @@ int main(int argc, char** argv)
 
 		conflicting_options(vm, "help", "show");
 		conflicting_options(vm, "help", "remove");
-		conflicting_options(vm, "help", "calc-descriptors");
 		conflicting_options(vm, "show", "remove");
-		conflicting_options(vm, "show", "calc-descriptors");
-		conflicting_options(vm, "remove", "calc-descriptors");
 
 		option_dependency(vm, "remove", "predicate");
 	}
 	catch(std::logic_error& err)
 	{
-		std::cout << "Command-line error: " << err.what() << std::endl;
+		std::cerr << "Command-line error: " << err.what() << std::endl;
 		return EXIT_FAILURE;
 	}
 
@@ -147,11 +137,9 @@ int main(int argc, char** argv)
 		return show(datasetPath.c_str(), pred);
 	else if(vm.count("remove"))
 		return remove(datasetPath.c_str(), pred);
-	else if(vm.count("calc-descriptors"))
-		return calcDescriptors(datasetPath.c_str(), 0);
 	else
 	{
-		std::cout << "Command-line error: no action specified" << std::endl;
+		std::cerr << "Command-line error: no action specified" << std::endl;
 		return EXIT_FAILURE;
 	}
 }
