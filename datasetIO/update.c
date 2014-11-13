@@ -4,7 +4,7 @@
 #include "internal.h"
 
 
-int dataset_update_sample(void** _dataset, int id,
+int dataset_update_sample_descriptor(void** _dataset, int id,
 		float* descriptor, size_t size, char** errMsg)
 {
 	int r;
@@ -46,6 +46,23 @@ int dataset_update_sample(void** _dataset, int id,
 		return r;
 	}
 
+	return 0;
+}
+
+int dataset_update_sample_class(void** _dataset, int id,
+		int class, char** errMsg)
+{
+	int r;
+	dataset_t* dataset = *_dataset;
+	char* query = sqlite3_mprintf("update objects set class = %d where id = %d",
+		class, id);
+	if((r = sqlite3_exec(dataset->db, query, NULL, NULL, errMsg)) != SQLITE_OK)
+	{
+		sqlite3_free(query);
+		return r;
+	}
+
+	sqlite3_free(query);
 	return 0;
 }
 

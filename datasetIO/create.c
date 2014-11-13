@@ -32,6 +32,7 @@ int dataset_create(void** _dataset, const char* path, char** errorMessage)
 				"x integer not null, y integer not null, "
 				"width integer not null, height integer not null, "
 				"descriptor blob, "
+				"class int, "
 				"filename text unique not null);",
 			NULL, NULL, errorMessage)) != SQLITE_OK)
 		return r;

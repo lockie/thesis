@@ -11,7 +11,8 @@
 using namespace std;
 
 
-int descr_callback(const IplImage* img, int id, int frame, int x, int y, void* dataset)
+int descr_callback(const IplImage* img, int id, int frame,
+		int x, int y, int _class, void* dataset)
 {
 	// TODO : show progress
 	// TODO : write own implementation?..
@@ -28,7 +29,8 @@ int descr_callback(const IplImage* img, int id, int frame, int x, int y, void* d
 
 	char* errMsg;
 	int r;
-	if((r = dataset_update_sample(&dataset, id, d.data(), d.size(), &errMsg)) != 0)
+	if((r = dataset_update_sample_descriptor(&dataset, id,
+			d.data(), d.size(), &errMsg)) != 0)
 	{
 		cerr << "Error: " << errMsg << endl;
 		return r;

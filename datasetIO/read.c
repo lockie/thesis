@@ -15,7 +15,8 @@ static int read_callback(void* data, int argc, char** argv, char** colNames)
 	const char* frame    = argv[2];
 	const char* x        = argv[3];
 	const char* y        = argv[4];
-	assert(argc == 5);
+	const char* class    = argv[5] ? argv[5] : "";
+	assert(argc == 6);
 
 	if((r = _dataset_reopen_archive(dataset, 0, &errMsg)) != 0)
 	{
@@ -55,8 +56,8 @@ static int read_callback(void* data, int argc, char** argv, char** colNames)
 		fprintf(stderr, "READ ERROR: sample file missing\n");
 		return -1;
 	}
-	return dataset->read_callback(img, atoi(id), atoi(frame), atoi(x), atoi(y),
-		dataset->read_callback_parameter);
+	return dataset->read_callback(img, atoi(id), atoi(frame),
+		atoi(x), atoi(y), atoi(class), dataset->read_callback_parameter);
 }
 
 int dataset_read_samples(void** _dataset, const char* predicate,
@@ -73,7 +74,7 @@ int dataset_read_samples(void** _dataset, const char* predicate,
 	dataset->read_callback_parameter = parameter;
 
 	snprintf(query, sizeof(query),
-		"select filename, id, frame, x, y from objects where %s;", predicate);
+		"select filename, id, frame, x, y, class from objects where %s;", predicate);
 	if((r = sqlite3_exec(dataset->db, query,
 			read_callback, (void*)dataset, errMsg)) != SQLITE_OK)
 	{
@@ -84,6 +85,46 @@ int dataset_read_samples(void** _dataset, const char* predicate,
 
 	dataset->read_callback = NULL;
 	dataset->read_callback_parameter = NULL;
+	return 0;
+}
+
+int dataset_read_sample_descriptor(void** _dataset, int id,
+		float** descriptor, size_t* size, char** errMsg)
+{
+	int r;
+	size_t oldsize = *size;
+	dataset_t* dataset = *_dataset;
+	sqlite3_stmt* stmt;
+
+	if((r = sqlite3_prepare_v2(dataset->db,
+			"select descriptor from objects where id = ?",
+			-1, &stmt, 0)) != SQLITE_OK)
+	{
+		*errMsg = (char*)sqlite3_errmsg(dataset->db);
+		return r;
+	}
+
+	if((r = sqlite3_bind_int (stmt, 1, id)) != SQLITE_OK)
+	{
+		*errMsg = (char*)sqlite3_errmsg(dataset->db);
+		return r;
+	}
+
+	if((r = sqlite3_step(stmt)) != SQLITE_ROW)
+	{
+		/* TODO : some sort of macro ._. */
+		/* TODO : store prepared statement in dataset struct to optimize? */
+		*errMsg = (char*)sqlite3_errmsg(dataset->db);
+		return r;
+	}
+
+	*size = sqlite3_column_bytes(stmt, 0);
+	if(oldsize * sizeof(float) < *size)
+		*descriptor = realloc(*descriptor, *size);
+	memcpy(*descriptor, sqlite3_column_blob(stmt, 0), *size);
+	*size /= sizeof(float);
+
+	sqlite3_finalize(stmt);
 	return 0;
 }
 

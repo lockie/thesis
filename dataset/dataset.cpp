@@ -13,9 +13,11 @@
 namespace po = boost::program_options;
 
 
-int show_callback(const IplImage* img, int id, int frame, int x, int y, void*)
+int show_callback(const IplImage* img, int id, int frame,
+		int x, int y, int _class, void*)
 {
 	cvShowImage("sample", img);
+	/* TODO : show ohter info too */
 	if((cvWaitKey(0) & 0xff) == 27)
 		return -1;
 	return 0;
@@ -140,6 +142,7 @@ int main(int argc, char** argv)
 	else
 	{
 		std::cerr << "Command-line error: no action specified" << std::endl;
+		std::cerr << usage;
 		return EXIT_FAILURE;
 	}
 }

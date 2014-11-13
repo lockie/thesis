@@ -23,7 +23,8 @@ typedef struct dataset_t
 	const char* path;
 	int lastFrame;
 	int frameObjectCounter;
-	int (*read_callback)(const IplImage*, int id, int frame, int x, int y, void*);
+	int (*read_callback)(const IplImage*, int id, int frame, int x, int y,
+			int _class, void*);
 	void* read_callback_parameter;
 } dataset_t;
 
