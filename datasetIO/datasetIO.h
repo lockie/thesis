@@ -19,8 +19,10 @@ int dataset_create_sample(void** dataset, int frame, IplImage* image,
 		const CvRect* bounds, char** errMsg);
 int dataset_read_samples(void** dataset, const char* predicate,
 		read_sample_callback callback, void* param, char** errorMessage);
+// TODO : dataset_read_samples_metadata fn (w/out actual image reading)
 int dataset_read_sample_descriptor(void** _dataset, int id,
 		float** descriptor, size_t* size, char** errMsg);
+int dataset_sample_count(void** dataset, int* count, char** errMsg);
 int dataset_update_sample_descriptor(void** dataset, int id,
 /*  size is in elements, not bytes */
 		float* descriptor, size_t size, char** errorMessage);

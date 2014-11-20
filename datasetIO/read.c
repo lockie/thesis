@@ -128,3 +128,31 @@ int dataset_read_sample_descriptor(void** _dataset, int id,
 	return 0;
 }
 
+int dataset_sample_count(void** _dataset, int* count, char** errMsg)
+{
+	int r;
+	dataset_t* dataset = *_dataset;
+	sqlite3_stmt* stmt;
+
+	if((r = sqlite3_prepare_v2(dataset->db,
+			"select count(1) from objects",
+			-1, &stmt, 0)) != SQLITE_OK)
+	{
+		*errMsg = (char*)sqlite3_errmsg(dataset->db);
+		return r;
+	}
+
+	if((r = sqlite3_step(stmt)) != SQLITE_ROW)
+	{
+		/* TODO : some sort of macro ._. */
+		/* TODO : store prepared statement in dataset struct to optimize? */
+		*errMsg = (char*)sqlite3_errmsg(dataset->db);
+		return r;
+	}
+
+	*count = sqlite3_column_int(stmt, 0);
+
+	sqlite3_finalize(stmt);
+	return 0;
+}
+

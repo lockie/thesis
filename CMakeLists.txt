@@ -9,4 +9,5 @@ add_subdirectory(datasetIO)
 add_subdirectory(extractor)
 add_subdirectory(dataset)
 add_subdirectory(describe)
+add_subdirectory(cluster)
 
