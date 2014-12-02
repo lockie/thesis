@@ -6,6 +6,8 @@
 
 extern int describe_HOG(const char*);
 
+int _verbose = 0;
+
 void help(char** argv)
 {
 	printf("USAGE:\n\t%s -h | -p [-d path | --dataset-path path] "
@@ -16,7 +18,6 @@ int main(int argc, char** argv)
 {
 	int helpflag = 0;
 	int errflag = 0;
-	int verbflag = 0;
 
 	char* dataset_path = ".";
 	int algorithm = 0;
@@ -45,7 +46,7 @@ int main(int argc, char** argv)
 				break;
 
 			case 'v':
-				verbflag = 1;
+				_verbose = 1;
 				break;
 
 			case '?':
@@ -60,19 +61,19 @@ int main(int argc, char** argv)
 		return errflag;
 	}
 
-	if(verbflag)
+	if(_verbose)
 		printf("Dataset path set to \"%s\"\n", dataset_path);
 
 	switch(algorithm)
 	{
 		case 1:
-			if(verbflag)
+			if(_verbose)
 				printf("Using HOG descriptor.\n");
 			return describe_HOG(dataset_path);
 			break;
 
 		case 2:
-			if(verbflag)
+			if(_verbose)
 				printf("Using perceptive hash\n");
 			// TODO : do pHash; see http://phash.org
 			break;
