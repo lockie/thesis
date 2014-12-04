@@ -5,6 +5,7 @@
 
 
 extern int describe_HOG(const char*);
+extern int describe_pHash(const char*);
 
 int _verbose = 0;
 
@@ -75,7 +76,7 @@ int main(int argc, char** argv)
 		case 2:
 			if(_verbose)
 				printf("Using perceptive hash\n");
-			// TODO : do pHash; see http://phash.org
+			return describe_pHash(dataset_path);
 			break;
 
 		default:
