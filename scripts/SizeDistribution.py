@@ -17,6 +17,9 @@ def main(argv):
 		action='store_true')
 	plot_group.add_argument('-H', '--height', help='only plot height',
 		action='store_true')
+	plot_group.add_argument('-R', '--ratio', help='only plot width/height ratio',
+		action='store_true')
+
 	args = parser.parse_args()
 
 	path = args.path
@@ -38,6 +41,8 @@ def main(argv):
 			size = width
 		elif args.height:
 			size = height
+		elif args.ratio:
+			size = int(100 * float(width) / height)
 		else:
 			size = width * height
 
