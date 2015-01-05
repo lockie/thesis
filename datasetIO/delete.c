@@ -83,6 +83,8 @@ int dataset_delete_samples(void** _dataset, const char* predicate,
 			copy_callback, (void*)dataset, errMsg)) != SQLITE_OK)
 		return r;
 
+	dataset->min_width = dataset->min_height = 0;
+
 	snprintf(query, sizeof(query),
 		"delete from objects where %s;", predicate);
 	if((r = sqlite3_exec(dataset->db, query, NULL, NULL, errMsg)) != SQLITE_OK)

@@ -193,6 +193,8 @@ int dataset_create_sample(void** _dataset, int frame, IplImage* image,
 	cvResetImageROI(image);
 	cvReleaseImage(&tmp);
 
+	dataset->min_width = dataset->min_height = 0;
+
 	snprintf(query, sizeof(query),
 		"insert into objects (frame, x, y, width, height, filename)"
 		"values (%d, %d, %d, %d, %d, '%s');",

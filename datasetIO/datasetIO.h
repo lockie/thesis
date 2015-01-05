@@ -23,6 +23,8 @@ int dataset_read_samples(void** dataset, const char* predicate,
 int dataset_read_sample_descriptor(void** _dataset, int id,
 		float** descriptor, size_t* size, char** errMsg);
 int dataset_sample_count(void** dataset, int* count, char** errMsg);
+int dataset_minimum_size(void** dataset, int* min_width,
+		int* min_height, char** errMsg);
 int dataset_update_sample_descriptor(void** dataset, int id,
 /*  size is in elements, not bytes */
 		float* descriptor, size_t size, char** errorMessage);

@@ -156,3 +156,52 @@ int dataset_sample_count(void** _dataset, int* count, char** errMsg)
 	return 0;
 }
 
+int dataset_minimum_size(void** _dataset, int* min_width,
+		int* min_height, char** errMsg)
+{
+	int r;
+	dataset_t* dataset = *_dataset;
+	sqlite3_stmt* stmt = NULL;
+
+	if(dataset->min_width != 0 && dataset->min_height != 0)
+	{
+		*min_width  = dataset->min_width;
+		*min_height = dataset->min_height;
+		return 0;
+	}
+
+	if((r = sqlite3_prepare_v2(dataset->db,
+			"select min(width) from objects",
+			-1, &stmt, 0)) != SQLITE_OK)
+	{
+		*errMsg = (char*)sqlite3_errmsg(dataset->db);
+		return r;
+	}
+	if((r = sqlite3_step(stmt)) != SQLITE_ROW)
+	{
+		*errMsg = (char*)sqlite3_errmsg(dataset->db);
+		return r;
+	}
+	dataset->min_width = *min_width = sqlite3_column_int(stmt, 0);
+	sqlite3_finalize(stmt);
+	stmt = NULL;
+
+	if((r = sqlite3_prepare_v2(dataset->db,
+			"select min(height) from objects",
+			-1, &stmt, 0)) != SQLITE_OK)
+	{
+		*errMsg = (char*)sqlite3_errmsg(dataset->db);
+		return r;
+	}
+	if((r = sqlite3_step(stmt)) != SQLITE_ROW)
+	{
+		*errMsg = (char*)sqlite3_errmsg(dataset->db);
+		return r;
+	}
+	dataset->min_height = *min_height = sqlite3_column_int(stmt, 0);
+	sqlite3_finalize(stmt);
+	stmt = NULL;
+
+	return 0;
+}
+
