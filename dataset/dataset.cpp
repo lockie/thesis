@@ -17,7 +17,14 @@ int show_callback(const IplImage* img, int id, int frame,
 		int x, int y, int _class, void*)
 {
 	cvShowImage("sample", img);
-	/* TODO : show ohter info too */
+
+	if(_class != 0)
+		printf("frame %d, %d x %d @ (%d, %d) class %d\n",
+			frame, img->width, img->height, x, y, _class);
+	else
+		printf("frame %d, %d x %d @ (%d, %d)\n",
+			frame, img->width, img->height, x, y);
+
 	if((cvWaitKey(0) & 0xff) == 27)
 		return -1;
 	return 0;
