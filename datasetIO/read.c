@@ -53,7 +53,8 @@ static int read_callback(void* data, int argc, char** argv, char** colNames)
 	if(!img)
 	{
 		/* inconsistent DB :E */
-		fprintf(stderr, "READ ERROR: sample file missing\n");
+		fprintf(stderr,
+				"READ ERROR: sample file with id=%s missing or corrupt\n", id);
 		return -1;
 	}
 	return dataset->read_callback(img, atoi(id), atoi(frame),
