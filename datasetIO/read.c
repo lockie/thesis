@@ -61,11 +61,12 @@ static int read_callback(void* data, int argc, char** argv, char** colNames)
 		atoi(x), atoi(y), atoi(class), dataset->read_callback_parameter);
 }
 
-int dataset_read_samples(void** _dataset, const char* predicate,
+int dataset_read_samples(void** _dataset, const char* _pred,
 		read_sample_callback callback, void* parameter, char** errMsg)
 {
 	int r;
 	dataset_t* dataset = *_dataset;
+	const char* predicate = (!_pred || strlen(_pred) == 0) ? "1=1" : _pred;
 	if(!dataset->ar_read)
 	{
 		*errMsg = "Dataset is not open for reading";
@@ -107,11 +108,12 @@ static int read_metadata_callback(void* data, int argc, char** argv, char** colN
 			dataset->read_metadata_callback_parameter);
 }
 
-int dataset_read_samples_metadata(void** _dataset, const char* predicate,
+int dataset_read_samples_metadata(void** _dataset, const char* _pred,
 		read_sample_metadata_callback callback, void* parameter, char** errMsg)
 {
 	int r;
 	dataset_t* dataset = *_dataset;
+	const char* predicate = (!_pred || strlen(_pred) == 0) ? "1=1" : _pred;
 
 	dataset->read_metadata_callback = callback;
 	dataset->read_metadata_callback_parameter = parameter;

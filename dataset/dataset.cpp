@@ -140,12 +140,10 @@ int main(int argc, char** argv)
 		return EXIT_SUCCESS;
 	}
 
-	const char* pred = predicate.empty() ? "1=1" : predicate.c_str();
-
 	if(vm.count("show"))
-		return show(datasetPath.c_str(), pred);
+		return show(datasetPath.c_str(), predicate.c_str());
 	else if(vm.count("remove"))
-		return remove(datasetPath.c_str(), pred);
+		return remove(datasetPath.c_str(), predicate.c_str());
 	else
 	{
 		std::cerr << "Command-line error: no action specified" << std::endl;
