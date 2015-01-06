@@ -209,6 +209,9 @@ void do_vibe(vibe_t** vibestruct, const IplImage* image)
 
 /* see N. Lu et al. An Improved Motion Detection Method for
  * Real-Time Surveillance
+ *
+ * see A. Amer. New binary morphological operations for effective low-cost
+ * boundary detection.
  */
 CvRect* postprocess_vibe(vibe_t* p)
 {
@@ -217,11 +220,10 @@ CvRect* postprocess_vibe(vibe_t* p)
 	CvRect* res;
 	int i = 0, n;
 
-/*	cvMorphologyEx(segMap, segMap, NULL, p->morphology_kernel, CV_MOP_ERODE, 2);
-	cvMorphologyEx(segMap, segMap, NULL, p->morphology_kernel, CV_MOP_DILATE, 8);*/
-	cvMorphologyEx(segMap, segMap, NULL, p->morphology_kernel, CV_MOP_OPEN, 1);
-	cvMorphologyEx(segMap, segMap, NULL, p->morphology_kernel, CV_MOP_CLOSE, 2);
-	cvMorphologyEx(segMap, segMap, NULL, p->morphology_kernel, CV_MOP_DILATE, 1);
+	cvMorphologyEx(segMap, segMap, NULL, p->morphology_kernel, CV_MOP_ERODE, 1);
+	cvMorphologyEx(segMap, segMap, NULL, p->morphology_kernel, CV_MOP_GRADIENT, 1);
+	cvMorphologyEx(segMap, segMap, NULL, p->morphology_kernel, CV_MOP_DILATE, 4);
+
 
 #ifndef NDEBUG
 	cvShowImage("post-processed vibe result", segMap);
