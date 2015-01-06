@@ -26,6 +26,7 @@ typedef struct dataset_t
 	int (*read_callback)(const IplImage*, int id, int frame, int x, int y,
 			int _class, void*);
 	void* read_callback_parameter;
+	int width, height;  /* cached source size */
 	int min_width, min_height;  /* cached values */
 } dataset_t;
 

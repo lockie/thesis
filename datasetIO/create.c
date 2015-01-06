@@ -37,6 +37,13 @@ int dataset_create(void** _dataset, const char* path, char** errorMessage)
 			NULL, NULL, errorMessage)) != SQLITE_OK)
 		return r;
 
+	if((r = sqlite3_exec(dataset->db,
+			"create table metadata("
+				"width integer not null, height integer not null "
+				");",
+			NULL, NULL, errorMessage)) != SQLITE_OK)
+		return r;
+
 	strncpy(filename, path, sizeof(filename));
 	strncat(filename, "/", sizeof(filename) - strlen(path));
 	strncat(filename, "samples.tar", sizeof(filename) - strlen(path) - 1);
@@ -157,6 +164,29 @@ int dataset_create_sample(void** _dataset, int frame, IplImage* image,
 	{
 		*errMsg = "Dataset is not open for writing";
 		return -1;
+	}
+	if(dataset->width == 0 || dataset->height == 0)
+	{
+		/* http://stackoverflow.com/a/4330694/1336774 */
+		snprintf(query, sizeof(query),
+			"insert or replace into metadata (width, height) "
+			"values (%d, %d);",
+			image->width, image->height
+		);
+		printf("q=%s\n", query);
+		if((r = sqlite3_exec(dataset->db, query, NULL, NULL, errMsg)) != SQLITE_OK)
+			return r;
+		dataset->width = image->width;
+		dataset->height = image->height;
+	}
+	else
+	{
+		if(dataset->width != image->width || dataset->height != image->height)
+		{
+			*errMsg = "Image size differs from one in metadata"
+					"(different source video?)";
+			return -1;
+		}
 	}
 	if(dataset->lastFrame != frame)
 	{

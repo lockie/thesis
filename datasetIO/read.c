@@ -157,6 +157,37 @@ int dataset_sample_count(void** _dataset, int* count, char** errMsg)
 	return 0;
 }
 
+int dataset_source_size(void** _dataset, int* width, int* height, char** errMsg)
+{
+	int r;
+	dataset_t* dataset = *_dataset;
+	sqlite3_stmt* stmt = NULL;
+
+	if(dataset->width != 0 && dataset->height != 0)
+	{
+		*width  = dataset->width;
+		*height = dataset->height;
+		return 0;
+	}
+
+	if((r = sqlite3_prepare_v2(dataset->db,
+			"select width, height from metadata",
+			-1, &stmt, 0)) != SQLITE_OK)
+	{
+		*errMsg = (char*)sqlite3_errmsg(dataset->db);
+		return r;
+	}
+	if((r = sqlite3_step(stmt)) != SQLITE_ROW)
+	{
+		*errMsg = (char*)sqlite3_errmsg(dataset->db);
+		return r;
+	}
+	dataset->width  = *width  = sqlite3_column_int(stmt, 0);
+	dataset->height = *height = sqlite3_column_int(stmt, 1);
+	sqlite3_finalize(stmt);
+	return 0;
+}
+
 int dataset_minimum_size(void** _dataset, int* min_width,
 		int* min_height, char** errMsg)
 {
@@ -171,6 +202,7 @@ int dataset_minimum_size(void** _dataset, int* min_width,
 		return 0;
 	}
 
+	/* TODO : make 1 stmt */
 	if((r = sqlite3_prepare_v2(dataset->db,
 			"select min(width) from objects",
 			-1, &stmt, 0)) != SQLITE_OK)
