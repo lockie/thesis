@@ -11,6 +11,8 @@ extern "C" {
 
 typedef int (*read_sample_callback)(const IplImage*, int id, int frame,
 		int x, int y, int _class, void* data);
+typedef int (*read_sample_metadata_callback)(int id, int frame, int x, int y,
+		int width, int height, int _class, void* data);
 
 int dataset_create(void** dataset, const char* path, char** errorMessage);
 int dataset_open(void** dataset, const char* path, int write, char** errorMessage);
@@ -19,7 +21,8 @@ int dataset_create_sample(void** dataset, int frame, IplImage* image,
 		const CvRect* bounds, char** errMsg);
 int dataset_read_samples(void** dataset, const char* predicate,
 		read_sample_callback callback, void* param, char** errorMessage);
-// TODO : dataset_read_samples_metadata fn (w/out actual image reading)
+int dataset_read_samples_metadata(void** dataset, const char* predicate,
+		read_sample_metadata_callback callback, void* param, char** errorMessage);
 int dataset_read_sample_descriptor(void** _dataset, int id,
 		float** descriptor, size_t* size, char** errMsg);
 int dataset_sample_count(void** dataset, int* count, char** errMsg);

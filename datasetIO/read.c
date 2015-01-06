@@ -89,6 +89,49 @@ int dataset_read_samples(void** _dataset, const char* predicate,
 	return 0;
 }
 
+static int read_metadata_callback(void* data, int argc, char** argv, char** colNames)
+{
+	dataset_t* dataset = data;
+
+	const char* id       = argv[0];
+	const char* frame    = argv[1];
+	const char* x        = argv[2];
+	const char* y        = argv[3];
+	const char* width    = argv[4];
+	const char* height   = argv[5];
+	const char* class    = argv[6] ? argv[6] : "";
+	assert(argc == 7);
+
+	return dataset->read_metadata_callback(atoi(id), atoi(frame),
+			atoi(x), atoi(y), atoi(width), atoi(height), atoi(class),
+			dataset->read_metadata_callback_parameter);
+}
+
+int dataset_read_samples_metadata(void** _dataset, const char* predicate,
+		read_sample_metadata_callback callback, void* parameter, char** errMsg)
+{
+	int r;
+	dataset_t* dataset = *_dataset;
+
+	dataset->read_metadata_callback = callback;
+	dataset->read_metadata_callback_parameter = parameter;
+
+	snprintf(query, sizeof(query),
+		"select id, frame, x, y, width, height, class "
+		"from objects where %s;", predicate);
+	if((r = sqlite3_exec(dataset->db, query,
+			read_metadata_callback, (void*)dataset, errMsg)) != SQLITE_OK)
+	{
+		*errMsg = (char*)sqlite3_errmsg(dataset->db);
+		dataset->read_metadata_callback = NULL;
+		return r;
+	}
+
+	dataset->read_metadata_callback = NULL;
+	dataset->read_metadata_callback_parameter = NULL;
+	return 0;
+}
+
 int dataset_read_sample_descriptor(void** _dataset, int id,
 		float** descriptor, size_t* size, char** errMsg)
 {
