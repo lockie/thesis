@@ -173,7 +173,6 @@ int dataset_create_sample(void** _dataset, int frame, IplImage* image,
 			"values (%d, %d);",
 			image->width, image->height
 		);
-		printf("q=%s\n", query);
 		if((r = sqlite3_exec(dataset->db, query, NULL, NULL, errMsg)) != SQLITE_OK)
 			return r;
 		dataset->width = image->width;
