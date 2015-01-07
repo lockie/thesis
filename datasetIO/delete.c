@@ -78,7 +78,7 @@ int dataset_delete_samples(void** _dataset, const char* predicate,
 	}
 
 	snprintf(query, sizeof(query),
-		"select filename from objects where not (%s);", predicate);
+		"select filename from objects where not (%s) order by id;", predicate);
 	if((r = sqlite3_exec(dataset->db, query,
 			copy_callback, (void*)dataset, errMsg)) != SQLITE_OK)
 		return r;
