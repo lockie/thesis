@@ -174,15 +174,17 @@ int dataset_read_sample_descriptor(void** _dataset, int id,
 	return 0;
 }
 
-int dataset_sample_count(void** _dataset, int* count, char** errMsg)
+int dataset_sample_count(void** _dataset, int* count, const char* _pred,
+		char** errMsg)
 {
 	int r;
 	dataset_t* dataset = *_dataset;
 	sqlite3_stmt* stmt;
+	const char* predicate = (!_pred || strlen(_pred) == 0) ? "1=1" : _pred;
 
-	if((r = sqlite3_prepare_v2(dataset->db,
-			"select count(1) from objects",
-			-1, &stmt, 0)) != SQLITE_OK)
+	snprintf(query, sizeof(query),
+		"select count(1) from objects where %s;", predicate);
+	if((r = sqlite3_prepare_v2(dataset->db, query, -1, &stmt, 0)) != SQLITE_OK)
 	{
 		*errMsg = (char*)sqlite3_errmsg(dataset->db);
 		return r;

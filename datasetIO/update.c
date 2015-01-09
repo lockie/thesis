@@ -4,6 +4,26 @@
 #include "internal.h"
 
 
+int dataset_begin_update(void** _dataset, char** errMsg)
+{
+	int r;
+	dataset_t* dataset = *_dataset;
+	if((r = sqlite3_exec(dataset->db, "begin transaction",
+			NULL, NULL, errMsg)) != SQLITE_OK)
+		return r;
+	return 0;
+}
+
+int dataset_end_update(void** _dataset, char** errMsg)
+{
+	int r;
+	dataset_t* dataset = *_dataset;
+	if((r = sqlite3_exec(dataset->db, "commit transaction",
+			NULL, NULL, errMsg)) != SQLITE_OK)
+		return r;
+	return 0;
+}
+
 int dataset_update_sample_descriptor(void** _dataset, int id,
 		float* descriptor, size_t size, char** errMsg)
 {
