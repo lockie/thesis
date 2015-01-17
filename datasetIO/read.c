@@ -26,7 +26,7 @@ static int read_callback(void* data, int argc, char** argv, char** colNames)
 
 	while(archive_read_next_header(dataset->ar_read, &dataset->ent) == ARCHIVE_OK)
 	{
-		if(strcmp(archive_entry_pathname(dataset->ent), filename) == 0)
+		if(strstr(archive_entry_pathname(dataset->ent), filename) != NULL)
 		{
 			CvMat* mat;
 			int64_t size = archive_entry_size(dataset->ent);
