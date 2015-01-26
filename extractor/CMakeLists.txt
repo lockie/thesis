@@ -17,5 +17,5 @@ set(CMAKE_C_FLAGS_RELEASE "-Wall -Wextra -fomit-frame-pointer -O3 -DNDEBUG")
 add_definitions ("-Wall -pedantic")
 
 add_executable(${PROJECT_NAME} ${SOURCES})
-target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS} DatasetIO)
+target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS} m DatasetIO)
 
