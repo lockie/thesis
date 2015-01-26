@@ -151,7 +151,7 @@ int do_cluster(const string& datasetPath)
 	const double _maxAccuracy   = 0.1;
 
 	int sampleCount = 0;
-	if((r = dataset_sample_count(&dataset, &sampleCount, &errMsg)) != 0)
+	if((r = dataset_sample_count(&dataset, &sampleCount, NULL, &errMsg)) != 0)
 	{
 		cerr << "Error: " << errMsg << endl;
 		dataset_close(&dataset);
