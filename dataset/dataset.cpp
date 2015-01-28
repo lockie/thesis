@@ -73,6 +73,44 @@ int static remove(const char* path, const char* predicate)
 	return 0;
 }
 
+int copy_callback(const IplImage* img, int id,
+		int, int, int, int, void* param)
+{
+	const char* dest = (const char*)param;
+
+	static char filename[PATH_MAX];
+	snprintf(filename, PATH_MAX, "%s/sample_%d.png", dest, id);
+
+	if(!cvSaveImage(filename, img))
+	{
+		std::cerr << "Error writing to '" << filename << "'!" << std::endl;
+		return -1;
+	}
+	return 0;
+}
+
+int static copy(const char* path, const char* predicate, const char* dest)
+{
+	void* dataset;
+	char* errMsg;
+	int r;
+	if((r = dataset_open(&dataset, path, 0, &errMsg)) != 0)
+	{
+		std::cerr << "Error: " << errMsg << std::endl;
+		dataset_close(&dataset);
+		return r;
+	}
+	if((r = dataset_read_samples(&dataset, predicate,
+			copy_callback, (void*)dest, &errMsg)) != 0)
+	{
+		std::cerr << "Error: " << errMsg << std::endl;
+		dataset_close(&dataset);
+		return r;
+	}
+	dataset_close(&dataset);
+	return 0;
+}
+
 void static conflicting_options(const po::variables_map& vm,
 		const char* opt1, const char* opt2)
 {
@@ -96,18 +134,23 @@ int main(int argc, char** argv)
 	// TODO : limit?
 	std::string datasetPath;
 	std::string predicate;
+	std::string destination;
 
 	po::options_description actions("Actions");
 	actions.add_options()
 		("help,h", "Show handy manual you're reading")
 		("show,s", "Show samples in dataset (predicate is optional)")
+		("copy,c", "Copy samples from dataset to (mandatory) destination")
 		("remove,r", "Remove samples from dataset by (mandatory) predicate ");
 	po::options_description parameters("Parameters");
 	parameters.add_options()
 		("dataset-path,d", po::value<std::string>(&datasetPath)->default_value("."),
 			"Path to dataset folder")
 		("predicate,p", po::value<std::string>(&predicate),
-			"Predicate for samples (SQL syntax)");
+			"Predicate for samples (SQL syntax)")
+		("destination,D", po::value<std::string>(&destination),
+			"Destination for samples copying (copy action; otherwise ignored)")
+		;
 
 	po::positional_options_description p;
 	p.add("dataset-path", -1);
@@ -124,9 +167,13 @@ int main(int argc, char** argv)
 
 		conflicting_options(vm, "help", "show");
 		conflicting_options(vm, "help", "remove");
+		conflicting_options(vm, "help", "copy");
 		conflicting_options(vm, "show", "remove");
+		conflicting_options(vm, "show", "copy");
+		conflicting_options(vm, "remove", "copy");
 
 		option_dependency(vm, "remove", "predicate");
+		option_dependency(vm, "copy", "destination");
 	}
 	catch(std::logic_error& err)
 	{
@@ -144,6 +191,8 @@ int main(int argc, char** argv)
 		return show(datasetPath.c_str(), predicate.c_str());
 	else if(vm.count("remove"))
 		return remove(datasetPath.c_str(), predicate.c_str());
+	else if(vm.count("copy"))
+		return copy(datasetPath.c_str(), predicate.c_str(), destination.c_str());
 	else
 	{
 		std::cerr << "Command-line error: no action specified" << std::endl;
